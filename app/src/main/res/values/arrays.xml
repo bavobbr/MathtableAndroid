@@ -1,0 +1,11 @@
+<resources>
+    <integer-array name="background_images">
+        <item>@drawable/bcat</item>
+        <item>@drawable/bbear</item>
+        <item>@drawable/bdog</item>
+        <item>@drawable/bpinguin</item>
+        <item>@drawable/bpolar</item>
+        <item>@drawable/bpanda</item>
+        <!-- Add more images as needed -->
+    </integer-array>
+</resources>

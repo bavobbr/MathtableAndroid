@@ -2,13 +2,18 @@ package app.mathtable
 
 import android.app.AlertDialog
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
 import android.widget.Button
 import android.widget.EditText
 import android.widget.GridLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import java.util.Random
 
 
 class GameActivity : AppCompatActivity() {
@@ -17,7 +22,7 @@ class GameActivity : AppCompatActivity() {
     private val solvedTiles = Array(10) { Array(10) { false } } // 10x10 grid of solved states
     private var suggestedTile: Button? = null
     private var correctAnswersCount = 0
-    private val targetCorrectAnswers = 5
+    private val targetCorrectAnswers = 8
     private val margin = 3
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +31,16 @@ class GameActivity : AppCompatActivity() {
 
         gameGrid = findViewById(R.id.gameGrid)
         initializeGameGrid()
+        setRandomBackgroundImage()
+    }
+
+    private fun setRandomBackgroundImage() {
+        val imageView = findViewById<ImageView>(R.id.backgroundImageView)
+        val backgroundImageResources = resources.obtainTypedArray(R.array.background_images)
+        val randomIndex = Random().nextInt(backgroundImageResources.length())
+        val drawableId = backgroundImageResources.getResourceId(randomIndex, -1)
+        imageView.setImageResource(drawableId)
+        backgroundImageResources.recycle()
     }
 
     private fun initializeGameGrid() {
@@ -73,7 +88,8 @@ class GameActivity : AppCompatActivity() {
                     }
                     //text = "$row x $col"
                     setOnClickListener { handleTileClick(this, row, col) }
-                    setBackgroundColor(Color.LTGRAY)
+                    background = ContextCompat.getDrawable(context, R.drawable.button_border)
+                    //setBackgroundColor(Color.LTGRAY)
                 }
                 button.tag = Pair(row, col)
                 gameGrid.addView(button)
@@ -90,13 +106,18 @@ class GameActivity : AppCompatActivity() {
             ).also {
                 it.width = 0
                 it.height = GridLayout.LayoutParams.WRAP_CONTENT
-                it.setMargins(margin, margin, margin, margin)
+                it.setMargins(3, 3, 3, 3)
             }
             gravity = Gravity.CENTER
             setText(text)
-            setBackgroundColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f) // Set text size to 18sp, adjust as needed
+            setTypeface(typeface, Typeface.BOLD) // Set text to bold
+            setTextColor(Color.BLACK) // Set text color to black, or any other contrasting color
+            setPadding(10, 10, 10, 10) // Add padding
+            setBackgroundColor(ContextCompat.getColor(this@GameActivity, R.color.header_background)) // Set background color to white, adjust as needed
         }
     }
+
 
 
     private fun handleTileClick(button: Button, row: Int, col: Int) {
@@ -111,13 +132,14 @@ class GameActivity : AppCompatActivity() {
                 if (userAnswer == row * col) {
                     button.isEnabled = false
                     correctAnswersCount++
-                    solvedTiles[row][col] = true
+                    solvedTiles[row-1][col-1] = true
                     button.isEnabled = false
                     button.background.alpha = 64 // Value between 0 (fully transparent) and 255 (fully opaque)
                     checkGameCompletion()
                     suggestTile() // Suggest a new tile to solve
                 } else {
-                    button.setBackgroundColor(Color.RED)
+                    button.setBackgroundColor(ContextCompat.getColor(this@GameActivity, R.color.wrong))
+                    suggestTile()
                 }
                 dialog.dismiss()
             }
@@ -151,8 +173,10 @@ class GameActivity : AppCompatActivity() {
 
     private fun suggestTile() {
         if (!completed) {
+            //suggestedTile?.setBackgroundColor(Color.LTGRAY) // Reset previous suggestion
+
             val unsolvedTiles = mutableListOf<Button>()
-            for (i in 0 until gameGrid.childCount) {
+            for (i in 1 until gameGrid.childCount) { // Start from 1 to skip the header
                 val button = gameGrid.getChildAt(i) as? Button
                 val position = button?.tag as? Pair<Int, Int>
                 if (button != null && position != null && !solvedTiles[position.first - 1][position.second - 1]) {
@@ -162,9 +186,12 @@ class GameActivity : AppCompatActivity() {
 
             if (unsolvedTiles.isNotEmpty()) {
                 val randomIndex = (unsolvedTiles.indices).random()
-                suggestedTile = unsolvedTiles[randomIndex]
-                suggestedTile?.setBackgroundColor(Color.YELLOW) // Highlight color
+                suggestedTile = unsolvedTiles[randomIndex].also {
+                    it.setBackgroundColor(ContextCompat.getColor(this@GameActivity, R.color.suggested)) // Highlight color
+                    it.isEnabled = true
+                }
             }
         }
     }
+
 }
